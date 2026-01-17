@@ -175,6 +175,22 @@ export function ChapterContent({
     };
   }, []);
 
+  const saveProgress = useCallback(async (pct: number, seconds: number) => {
+    const completed = pct >= 90;
+
+    await supabase.from('reading_progress').upsert({
+      book_id: bookId,
+      chapter_slug: chapterSlug,
+      user_id: userId,
+      scroll_pct: pct,
+      time_spent_seconds: seconds,
+      last_read_at: new Date().toISOString(),
+      completed_at: completed ? new Date().toISOString() : null,
+    }, {
+      onConflict: 'book_id,chapter_slug,user_id',
+    });
+  }, [bookId, chapterSlug, userId, supabase]);
+
   // Track scroll progress
   useEffect(() => {
     let lastSave = Date.now();
@@ -209,22 +225,6 @@ export function ChapterContent({
       saveProgress(scrollPct, timeSpentRef.current);
     };
   }, [scrollPct, saveProgress]);
-
-  const saveProgress = useCallback(async (pct: number, seconds: number) => {
-    const completed = pct >= 90;
-
-    await supabase.from('reading_progress').upsert({
-      book_id: bookId,
-      chapter_slug: chapterSlug,
-      user_id: userId,
-      scroll_pct: pct,
-      time_spent_seconds: seconds,
-      last_read_at: new Date().toISOString(),
-      completed_at: completed ? new Date().toISOString() : null,
-    }, {
-      onConflict: 'book_id,chapter_slug,user_id',
-    });
-  }, [bookId, chapterSlug, userId, supabase]);
 
   // Handle text selection for comments
   const handleTextSelection = useCallback(() => {
