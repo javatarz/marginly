@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Book Review Platform',
-  description: 'Private book review and feedback platform',
+  title: 'Marginly',
+  description: 'Self-hosted book review and feedback platform',
 };
 
 export default function RootLayout({

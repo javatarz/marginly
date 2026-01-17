@@ -1,4 +1,4 @@
-# Book Review Platform
+# Marginly
 
 A self-hosted, invite-only book review platform for collecting feedback from beta readers.
 
@@ -42,7 +42,7 @@ npx supabase db push
 ### 2. Configure Environment
 
 ```bash
-cp .env.local.example .env.local
+cp .env.example .env.local
 ```
 
 Edit `.env.local` with your Supabase credentials:
