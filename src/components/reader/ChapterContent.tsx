@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+// Comment selection only captures text within chapter content
+
 interface Comment {
   id: string;
   anchor_text: string;
