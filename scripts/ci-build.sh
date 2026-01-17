@@ -8,11 +8,15 @@ echo "1. Linting..."
 npm run lint
 
 echo ""
-echo "2. Building Next.js..."
+echo "2. Running unit tests..."
+npm run test
+
+echo ""
+echo "3. Building Next.js..."
 npm run build
 
 echo ""
-echo "3. Running database migrations..."
+echo "4. Running database migrations..."
 if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_PROJECT_REF" ]; then
   npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
   npx supabase db push --include-all
@@ -21,7 +25,7 @@ else
 fi
 
 echo ""
-echo "4. Syncing books and chapters..."
+echo "5. Syncing books and chapters..."
 if [ -n "$NEXT_PUBLIC_SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
   node scripts/sync-books.mjs
 else

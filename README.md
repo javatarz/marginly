@@ -159,10 +159,27 @@ Add these environment variables in Vercel (Settings → Environment Variables):
 ## Development
 
 ```bash
-npm run dev     # Start development server
-npm run build   # Build for production
-npm run start   # Start production server
-npm run lint    # Run linter
+npm run dev           # Start development server
+npm run build         # Build for production
+npm run start         # Start production server
+npm run lint          # Run linter
+npm run test          # Run unit tests
+npm run test:watch    # Run unit tests in watch mode
+npm run test:e2e      # Run E2E tests (requires running app)
+```
+
+### Testing
+
+**Unit tests** (Vitest) run without external dependencies and are included in CI.
+
+**E2E tests** (Playwright) require a running app with Supabase:
+```bash
+# Local: Start dev server first
+npm run dev
+npm run test:e2e
+
+# Against deployed URL
+PLAYWRIGHT_BASE_URL=https://your-app.vercel.app npm run test:e2e
 ```
 
 ## Project Structure
