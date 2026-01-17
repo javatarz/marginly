@@ -18,30 +18,17 @@ export default async function BookPage({ params }: PageProps) {
     redirect('/login');
   }
 
-  // Check access and get book details
-  const { data: access } = await supabase
-    .from('book_access')
-    .select(`
-      role,
-      books (
-        id,
-        slug,
-        title,
-        description,
-        version,
-        version_name,
-        changelog
-      )
-    `)
-    .eq('user_id', user.id)
-    .eq('books.slug', bookSlug)
+  // Get book details (RLS handles access control)
+  const { data: book } = await supabase
+    .from('books')
+    .select('id, slug, title, description, version, version_name, changelog')
+    .eq('slug', bookSlug)
+    .eq('is_active', true)
     .single();
 
-  if (!access || !access.books) {
+  if (!book) {
     notFound();
   }
-
-  const book = access.books as any;
 
   // Get chapters
   const { data: chapters } = await supabase

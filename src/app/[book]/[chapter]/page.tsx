@@ -19,26 +19,17 @@ export default async function ChapterPage({ params }: PageProps) {
     redirect('/login');
   }
 
-  // Check access and get book details
-  const { data: access } = await supabase
-    .from('book_access')
-    .select(`
-      role,
-      books!inner (
-        id,
-        slug,
-        title
-      )
-    `)
-    .eq('user_id', user.id)
-    .eq('books.slug', bookSlug)
+  // Get book details (RLS handles access control)
+  const { data: book } = await supabase
+    .from('books')
+    .select('id, slug, title')
+    .eq('slug', bookSlug)
+    .eq('is_active', true)
     .single();
 
-  if (!access || !access.books) {
+  if (!book) {
     notFound();
   }
-
-  const book = access.books as any;
 
   // Get chapter details
   const { data: chapter } = await supabase
