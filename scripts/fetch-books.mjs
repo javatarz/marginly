@@ -46,8 +46,9 @@ async function fetchGitHubRelease(repo, release) {
   }
 
   // Get release info
+  // Note: /releases/latest excludes pre-releases, so for 'latest' we fetch all and take first
   const releaseUrl = release === 'latest'
-    ? `https://api.github.com/repos/${repo}/releases/latest`
+    ? `https://api.github.com/repos/${repo}/releases`
     : `https://api.github.com/repos/${repo}/releases/tags/${release}`;
 
   console.log(`  Fetching release info from ${releaseUrl}`);
@@ -64,7 +65,17 @@ async function fetchGitHubRelease(repo, release) {
     throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // If fetching 'latest', we got an array - return the first (most recent) release
+  if (release === 'latest') {
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error('No releases found');
+    }
+    return data[0];
+  }
+
+  return data;
 }
 
 async function downloadAndExtract(url, destDir, headers) {
