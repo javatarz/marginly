@@ -9,12 +9,24 @@ npm run dev      # Start Next.js dev server on port 3000
 npm run build    # Build for production
 npm run lint     # Run ESLint
 
-# Database migrations
-supabase link --project-ref <PROJECT_REF>  # Link to Supabase project
-supabase db push                            # Apply migrations
-supabase db diff -f <name>                  # Generate migration from local changes
-supabase migration new <name>               # Create empty migration file
+# Database migrations (via npx)
+npx supabase link --project-ref <PROJECT_REF>  # Link to Supabase project
+npx supabase db push                            # Apply migrations
+npx supabase db diff -f <name>                  # Generate migration from local changes
+npx supabase migration new <name>               # Create empty migration file
 ```
+
+## CLI Tools Available
+
+Both CLIs are available through npx (no global install needed):
+
+- **Vercel CLI**: `npx vercel <command>` - deployments, logs, env vars
+  - `npx vercel ls` - list deployments
+  - `npx vercel inspect <url> --logs` - view build logs
+  - `npx vercel env ls` - list environment variables
+
+- **Supabase CLI**: `npx supabase <command>` - migrations, config
+  - Use sparingly; most work is done via migrations and SQL Editor
 
 ## Architecture
 
@@ -23,10 +35,11 @@ supabase migration new <name>               # Create empty migration file
 ### Authentication Flow
 
 Invite-only magic link authentication:
-1. User email checked against `book_access` table before magic link sent
-2. `book_access.user_email` stores invited emails (pre-signup)
-3. `handle_new_user()` trigger links `user_id` when user signs up
-4. Middleware refreshes auth session on every request
+1. User email checked against `global_admins` or `book_access` table before magic link sent
+2. `global_admins` - platform-wide admin access to all books
+3. `book_access` - per-book reader invites (user_email stored pre-signup)
+4. `handle_new_user()` trigger links `user_id` in both tables when user signs up
+5. Middleware refreshes auth session on every request
 
 Public routes: `/login`, `/auth/callback`, `/auth/verify`
 
@@ -41,11 +54,13 @@ Public routes: `/login`, `/auth/callback`, `/auth/verify`
 Core tables with RLS enabled:
 - `books` - Book metadata (slug, title, version)
 - `chapters` - Chapter metadata (book_id, slug, number, title, status)
-- `book_access` - Access control (book_id, user_email/user_id, role: admin|reader)
-- `comments` - Inline annotations (anchor_text, anchor_start/end, content)
-- `reading_progress` - Per-chapter progress (scroll_pct, time_spent)
+- `global_admins` - Platform-wide admin access (user_email, user_id)
+- `book_access` - Per-book reader invites (book_id, user_email/user_id)
+- `comments` - Inline annotations with threading (anchor_text, content, parent_id, is_resolved)
+- `reading_progress` - Per-chapter progress (scroll_pct, time_spent_seconds)
+- `reading_sessions` - Session analytics (started_at, ended_at, max_scroll_pct, viewport)
 
-Access is controlled via `book_access` table. All queries filter through RLS policies.
+Access controlled via RLS policies that check both `global_admins` and `book_access`.
 
 ### Routing
 
