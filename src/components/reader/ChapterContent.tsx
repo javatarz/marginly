@@ -237,15 +237,15 @@ export function ChapterContent({
   }, []);
 
   const handleTextSelection = useCallback(() => {
-    if (!isSelectingRef.current) return;
-
-    // Clear any existing timeout
+    // Clear any existing timeout to debounce multiple mouseup events
     if (selectionTimeoutRef.current) {
       clearTimeout(selectionTimeoutRef.current);
     }
 
-    // Wait for selection to stabilize (user finished dragging)
+    // Wait longer for selection to fully stabilize after mouse release
     selectionTimeoutRef.current = setTimeout(() => {
+      // Only process if we were actively selecting
+      if (!isSelectingRef.current) return;
       isSelectingRef.current = false;
 
       const selection = window.getSelection();
@@ -254,14 +254,18 @@ export function ChapterContent({
       }
 
       // Check if the selection is within the content element
-      const range = selection.getRangeAt(0);
-      const contentEl = contentRef.current;
+      try {
+        const range = selection.getRangeAt(0);
+        const contentEl = contentRef.current;
 
-      if (contentEl && contentEl.contains(range.commonAncestorContainer)) {
-        setSelectedText(selection.toString().trim());
-        setShowCommentForm(true);
+        if (contentEl && contentEl.contains(range.commonAncestorContainer)) {
+          setSelectedText(selection.toString().trim());
+          setShowCommentForm(true);
+        }
+      } catch (e) {
+        // Selection may have been cleared, ignore
       }
-    }, 200);
+    }, 500);
   }, []);
 
   // Submit new comment or reply
