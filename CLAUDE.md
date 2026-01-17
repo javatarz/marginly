@@ -59,6 +59,29 @@ Access is controlled via `book_access` table. All queries filter through RLS pol
 
 Book chapters are static HTML files in `public/books/{book-slug}/`. Chapter metadata in database points to these files.
 
+Books are auto-discovered from `public/books/*/manifest.json` and synced to Supabase on deploy.
+
+## CI/CD Pipeline
+
+**Single pipeline: Vercel** - Do NOT create GitHub Actions for CI/CD.
+
+Pipeline order (defined in `scripts/ci-build.sh`):
+1. Lint
+2. Build (Next.js)
+3. Migrate (Supabase)
+4. Sync books/chapters from manifests
+
+### Required Vercel Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `NEXT_PUBLIC_APP_URL` | Production URL (e.g., https://review.karun.me) |
+| `SUPABASE_ACCESS_TOKEN` | For CLI migrations |
+| `SUPABASE_PROJECT_REF` | For CLI migrations |
+| `SUPABASE_SERVICE_ROLE_KEY` | For sync script (bypasses RLS)
+
 ## Work Management
 
 **All work is managed through `bd` (beads).** This is mandatory, not optional.
