@@ -26,7 +26,8 @@ jwt_expiry = 3600
 enable_signup = false  # Invite-only
 
 [auth.email]
-enable_signup = false  # Only invited users can sign in
+enable_signup = true  # Allow email OTP/magic link login
+double_confirm_changes = true
 enable_confirmations = true
 
 [auth.external.apple]
