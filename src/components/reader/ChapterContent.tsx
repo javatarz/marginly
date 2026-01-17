@@ -55,8 +55,8 @@ export function ChapterContent({
   const [showResolved, setShowResolved] = useState(false);
   const [scrollPct, setScrollPct] = useState(initialProgress?.scroll_pct || 0);
 
-  // Time tracking state
-  const [timeSpent, setTimeSpent] = useState(initialProgress?.time_spent_seconds || 0);
+  // Time tracking refs (using refs instead of state to avoid re-renders during selection)
+  const timeSpentRef = useRef(initialProgress?.time_spent_seconds || 0);
   const lastActivityRef = useRef(Date.now());
   const isActiveRef = useRef(true);
   const sessionIdRef = useRef<string | null>(null);
@@ -144,7 +144,7 @@ export function ChapterContent({
   useEffect(() => {
     const timer = setInterval(() => {
       if (isActiveRef.current) {
-        setTimeSpent((prev) => prev + 1);
+        timeSpentRef.current += 1;
       }
     }, 1000);
 
@@ -194,21 +194,21 @@ export function ChapterContent({
 
       // Debounce saving
       if (Date.now() - lastSave > saveInterval) {
-        saveProgress(pct, timeSpent);
+        saveProgress(pct, timeSpentRef.current);
         lastSave = Date.now();
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [timeSpent]);
+  }, [saveProgress]);
 
   // Save progress on unmount
   useEffect(() => {
     return () => {
-      saveProgress(scrollPct, timeSpent);
+      saveProgress(scrollPct, timeSpentRef.current);
     };
-  }, [scrollPct, timeSpent]);
+  }, [scrollPct, saveProgress]);
 
   const saveProgress = useCallback(async (pct: number, seconds: number) => {
     const completed = pct >= 90;
