@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Comment {
@@ -32,6 +32,8 @@ interface ChapterContentProps {
   initialComments: Comment[];
 }
 
+const IDLE_TIMEOUT = 60000; // 1 minute of inactivity pauses timer
+
 export function ChapterContent({
   bookSlug,
   chapterSlug,
@@ -48,6 +50,13 @@ export function ChapterContent({
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [scrollPct, setScrollPct] = useState(initialProgress?.scroll_pct || 0);
+
+  // Time tracking state
+  const [timeSpent, setTimeSpent] = useState(initialProgress?.time_spent_seconds || 0);
+  const lastActivityRef = useRef(Date.now());
+  const isActiveRef = useRef(true);
+  const sessionIdRef = useRef<string | null>(null);
+  const maxScrollRef = useRef(initialProgress?.scroll_pct || 0);
 
   const supabase = createClient();
 
@@ -73,6 +82,93 @@ export function ChapterContent({
     loadContent();
   }, [bookSlug, chapterSlug]);
 
+  // Scroll restoration - restore position after content loads
+  useEffect(() => {
+    if (!isLoading && content && initialProgress?.scroll_pct) {
+      // Wait a tick for content to render
+      setTimeout(() => {
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollTo = (initialProgress.scroll_pct / 100) * docHeight;
+        window.scrollTo({ top: scrollTo, behavior: 'instant' });
+      }, 100);
+    }
+  }, [isLoading, content, initialProgress?.scroll_pct]);
+
+  // Create reading session on mount
+  useEffect(() => {
+    async function createSession() {
+      const { data } = await supabase
+        .from('reading_sessions')
+        .insert({
+          user_id: userId,
+          book_id: bookId,
+          chapter_slug: chapterSlug,
+          started_at: new Date().toISOString(),
+          max_scroll_pct: 0,
+          user_agent: navigator.userAgent,
+          viewport_width: window.innerWidth,
+          viewport_height: window.innerHeight,
+        })
+        .select('id')
+        .single();
+
+      if (data) {
+        sessionIdRef.current = data.id;
+      }
+    }
+
+    createSession();
+
+    // End session on unmount
+    return () => {
+      if (sessionIdRef.current) {
+        supabase
+          .from('reading_sessions')
+          .update({
+            ended_at: new Date().toISOString(),
+            max_scroll_pct: maxScrollRef.current,
+          })
+          .eq('id', sessionIdRef.current)
+          .then(() => {});
+      }
+    };
+  }, [bookId, chapterSlug, userId, supabase]);
+
+  // Time tracking with idle detection
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (isActiveRef.current) {
+        setTimeSpent((prev) => prev + 1);
+      }
+    }, 1000);
+
+    const handleActivity = () => {
+      lastActivityRef.current = Date.now();
+      isActiveRef.current = true;
+    };
+
+    const checkIdle = setInterval(() => {
+      if (Date.now() - lastActivityRef.current > IDLE_TIMEOUT) {
+        isActiveRef.current = false;
+      }
+    }, 10000);
+
+    // Activity listeners
+    window.addEventListener('scroll', handleActivity, { passive: true });
+    window.addEventListener('mousemove', handleActivity, { passive: true });
+    window.addEventListener('keydown', handleActivity, { passive: true });
+    window.addEventListener('click', handleActivity, { passive: true });
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(checkIdle);
+      window.removeEventListener('scroll', handleActivity);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+    };
+  }, []);
+
   // Track scroll progress
   useEffect(() => {
     let lastSave = Date.now();
@@ -81,29 +177,34 @@ export function ChapterContent({
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const pct = Math.round((scrollTop / docHeight) * 100);
+      const pct = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
 
       setScrollPct(pct);
 
+      // Track max scroll for session
+      if (pct > maxScrollRef.current) {
+        maxScrollRef.current = pct;
+      }
+
       // Debounce saving
       if (Date.now() - lastSave > saveInterval) {
-        saveProgress(pct);
+        saveProgress(pct, timeSpent);
         lastSave = Date.now();
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [timeSpent]);
 
   // Save progress on unmount
   useEffect(() => {
     return () => {
-      saveProgress(scrollPct);
+      saveProgress(scrollPct, timeSpent);
     };
-  }, [scrollPct]);
+  }, [scrollPct, timeSpent]);
 
-  const saveProgress = useCallback(async (pct: number) => {
+  const saveProgress = useCallback(async (pct: number, seconds: number) => {
     const completed = pct >= 90;
 
     await supabase.from('reading_progress').upsert({
@@ -111,6 +212,7 @@ export function ChapterContent({
       chapter_slug: chapterSlug,
       user_id: userId,
       scroll_pct: pct,
+      time_spent_seconds: seconds,
       last_read_at: new Date().toISOString(),
       completed_at: completed ? new Date().toISOString() : null,
     }, {
