@@ -138,7 +138,8 @@ async function fetchBook(bookConfig) {
       a.name.endsWith('.tar.gz') || a.name.endsWith('.tgz')
     );
 
-    const downloadUrl = tarballAsset?.browser_download_url || releaseInfo.tarball_url;
+    // For private repos, use API URL (tarballAsset.url) instead of browser_download_url
+    const downloadUrl = tarballAsset?.url || tarballAsset?.browser_download_url || releaseInfo.tarball_url;
 
     if (!downloadUrl) {
       throw new Error('No downloadable archive found in release');
