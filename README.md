@@ -214,4 +214,6 @@ public/
 
 ## License
 
-Private - for personal use only.
+Licensed under Apache 2.0 with Commons Clause. See [LICENSE](LICENSE) for details.
+
+This means you can freely use, modify, and distribute this software for non-commercial purposes. Commercial use requires explicit permission from the author.
