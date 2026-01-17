@@ -13,23 +13,12 @@ export default async function HomePage() {
     redirect('/login');
   }
 
-  // Get books the user has access to
-  const { data: accessibleBooks } = await supabase
-    .from('book_access')
-    .select(`
-      book_id,
-      role,
-      books (
-        id,
-        slug,
-        title,
-        description,
-        version,
-        version_name,
-        changelog
-      )
-    `)
-    .eq('user_id', user.id);
+  // Get books the user has access to (RLS handles filtering)
+  const { data: books } = await supabase
+    .from('books')
+    .select('id, slug, title, description, version, version_name, changelog')
+    .eq('is_active', true)
+    .order('title');
 
   // Get reading progress for each book
   const { data: progress } = await supabase
@@ -65,7 +54,7 @@ export default async function HomePage() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6">Your Books</h2>
 
-        {!accessibleBooks || accessibleBooks.length === 0 ? (
+        {!books || books.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <p>You don&apos;t have access to any books yet.</p>
             <p className="text-sm mt-2">
@@ -74,8 +63,7 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="grid gap-6">
-            {accessibleBooks.map((access) => {
-              const book = access.books as any;
+            {books.map((book) => {
               const bookProgress = progressByBook?.[book.id] || [];
               const chaptersRead = bookProgress.filter(
                 (p) => p.scroll_pct >= 90
