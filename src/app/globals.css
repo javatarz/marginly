@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+body {
+  @apply bg-paper text-ink antialiased;
+}
+
+/* Book content styling */
+.book-content {
+  @apply font-serif text-lg leading-relaxed;
+}
+
+.book-content h1,
+.book-content h2,
+.book-content h3 {
+  @apply font-sans font-bold;
+}
+
+.book-content h1 {
+  @apply text-3xl mt-8 mb-4;
+}
+
+.book-content h2 {
+  @apply text-2xl mt-6 mb-3;
+}
+
+.book-content h3 {
+  @apply text-xl mt-4 mb-2;
+}
+
+.book-content p {
+  @apply mb-4;
+}
+
+.book-content pre {
+  @apply bg-gray-100 p-4 rounded-lg overflow-x-auto my-4 font-mono text-sm;
+}
+
+.book-content code {
+  @apply bg-gray-100 px-1 py-0.5 rounded font-mono text-sm;
+}
+
+.book-content pre code {
+  @apply bg-transparent p-0;
+}
+
+.book-content blockquote {
+  @apply border-l-4 border-gray-300 pl-4 italic my-4;
+}
+
+.book-content ul,
+.book-content ol {
+  @apply ml-6 mb-4;
+}
+
+.book-content li {
+  @apply mb-1;
+}
+
+/* Comment highlighting */
+.has-comment {
+  @apply bg-yellow-100 cursor-pointer;
+}
+
+.has-comment:hover {
+  @apply bg-yellow-200;
+}
+
+/* Selection for new comments */
+::selection {
+  @apply bg-blue-200;
+}
