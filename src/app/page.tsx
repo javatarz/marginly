@@ -51,7 +51,7 @@ export default async function HomePage() {
                 Admin
               </Link>
             )}
-            <form action="/auth/signout" method="post">
+            <form action="/auth/signout" method="post" className="flex">
               <button
                 type="submit"
                 className="text-gray-500 hover:text-gray-700"
