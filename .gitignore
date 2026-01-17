@@ -46,3 +46,7 @@ next-env.d.ts
 # Supabase
 .supabase/
 supabase/.temp/
+
+# Book content (fetched at build time)
+public/books/
+books.config.json
