@@ -13,6 +13,13 @@ export default async function HomePage() {
     redirect('/login');
   }
 
+  // Check if user is a global admin
+  const { data: isAdmin } = await supabase
+    .from('global_admins')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
   // Get books the user has access to (RLS handles filtering)
   const { data: books } = await supabase
     .from('books')
@@ -37,12 +44,17 @@ export default async function HomePage() {
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-semibold">Book Reviews</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{user.email}</span>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-gray-600">{user.email}</span>
+            {isAdmin && (
+              <Link href="/admin" className="text-gray-500 hover:text-gray-700">
+                Admin
+              </Link>
+            )}
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700"
               >
                 Sign out
               </button>
