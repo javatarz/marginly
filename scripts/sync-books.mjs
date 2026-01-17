@@ -1,12 +1,10 @@
 #!/usr/bin/env node
-/**
- * Sync books and chapters from public/books/ to Supabase
- *
- * Scans public/books/*/ directories for manifest.json files and upserts
- * book and chapter metadata to the database.
- *
- * Usage: NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/sync-books.mjs
- */
+// Sync books and chapters from public/books/ to Supabase
+//
+// Scans public/books/*/ directories for manifest.json files and upserts
+// book and chapter metadata to the database.
+//
+// Usage: NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/sync-books.mjs
 
 import { createClient } from '@supabase/supabase-js';
 import { readdir, readFile } from 'fs/promises';
