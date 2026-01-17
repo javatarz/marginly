@@ -107,42 +107,37 @@ export default async function HomePage() {
                 <Link
                   key={book.id}
                   href={`/${book.slug}`}
-                  className="block bg-white rounded-lg border border-gray-200 p-6 hover:border-accent hover:shadow-md transition-all"
+                  className="block bg-white rounded-lg border border-gray-200 p-6 hover:border-accent hover:shadow-md transition-all relative"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-xl font-semibold text-ink">
-                        {book.title}
-                      </h3>
-                      {book.description && (
-                        <p className="text-gray-600 mt-1">{book.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {hasNewContent && (
-                        <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded">
-                          Updated
-                        </span>
-                      )}
-                      {book.last_synced_at && (
-                        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                          {new Date(book.last_synced_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  {hasNewContent && (
+                    <span className="absolute top-4 right-4 text-sm font-medium text-green-700 bg-green-100 px-3 py-1 rounded-full">
+                      Updated
+                    </span>
+                  )}
+                  <h3 className="text-xl font-semibold text-ink pr-20">
+                    {book.title}
+                  </h3>
+                  {book.description && (
+                    <p className="text-gray-600 mt-2">{book.description}</p>
+                  )}
 
                   <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
+                    {book.last_synced_at && (
+                      <span>
+                        Updated{' '}
+                        {new Date(book.last_synced_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    )}
                     {chaptersRead > 0 && (
                       <span>{chaptersRead} chapters read</span>
                     )}
                     {lastRead && (
                       <span>
-                        Last read:{' '}
+                        Last read{' '}
                         {new Date(lastRead.last_read_at).toLocaleDateString()}
                       </span>
                     )}
