@@ -20,6 +20,13 @@ export default async function HomePage() {
     .eq('user_id', user.id)
     .single();
 
+  // Get user profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single();
+
   // Get books the user has access to (RLS handles filtering)
   const { data: books } = await supabase
     .from('books')
@@ -45,7 +52,9 @@ export default async function HomePage() {
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-semibold">Book Reviews</h1>
           <div className="flex items-center gap-4 text-sm">
-            <span className="text-gray-600">{user.email}</span>
+            <Link href="/profile" className="text-gray-600 hover:text-gray-800">
+              {profile?.display_name || user.email}
+            </Link>
             {isAdmin && (
               <Link href="/admin" className="text-gray-500 hover:text-gray-700">
                 Admin
