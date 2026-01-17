@@ -116,11 +116,50 @@ from books where slug = 'my-book';
 
 When the reader visits the site and enters their email, they'll receive a magic link.
 
-## Publishing from Another Repo
+## Fetching Books from GitHub Releases
 
-Use a GitHub Action to build HTML from your manuscript and push to this repo's `public/books/` folder.
+Instead of committing book content directly, you can fetch books from GitHub releases at build time.
 
-The sync script runs on each Vercel deploy and upserts book/chapter metadata.
+### Configure Book Sources
+
+Create `books.config.json` (or copy from `books.config.example.json`):
+
+```json
+{
+  "books": [
+    {
+      "slug": "my-book",
+      "source": {
+        "type": "github-release",
+        "repo": "your-username/your-book-repo",
+        "release": "latest"
+      }
+    }
+  ]
+}
+```
+
+### Fetch Books
+
+```bash
+# Fetch all configured books
+npm run fetch-books
+
+# Fetch a specific book
+npm run fetch-books -- --book=my-book
+```
+
+For private repositories, set `GITHUB_TOKEN` environment variable.
+
+### Alternative: Environment Variable Config
+
+For CI/CD, you can pass the config as an environment variable instead of a file:
+
+```bash
+BOOKS_CONFIG='{"books":[...]}' npm run fetch-books
+```
+
+This is useful for Vercel deployments where you don't want to commit your book configuration.
 
 ## Database Migrations
 
