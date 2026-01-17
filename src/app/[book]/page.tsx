@@ -96,9 +96,15 @@ export default async function BookPage({ params }: PageProps) {
                   Updated
                 </span>
               )}
-              <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                {book.version_name || book.version}
-              </span>
+              {book.last_synced_at && (
+                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  {new Date(book.last_synced_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </span>
+              )}
             </div>
           </div>
         </div>
