@@ -96,6 +96,7 @@ async function syncBook(bookData) {
   const { book: bookMeta, chapters } = manifest;
 
   // Upsert book
+  const now = new Date().toISOString();
   const bookRecord = {
     slug,
     title: bookMeta.title || titleFromSlug(slug),
@@ -103,7 +104,8 @@ async function syncBook(bookData) {
     version: bookMeta.version || 'v0.1',
     version_name: bookMeta.version_name || null,
     is_active: true,
-    updated_at: new Date().toISOString()
+    updated_at: now,
+    last_synced_at: now
   };
 
   console.log(`Syncing book: ${bookRecord.title} (${slug})`);

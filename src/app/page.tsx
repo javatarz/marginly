@@ -23,7 +23,7 @@ export default async function HomePage() {
   // Get books the user has access to (RLS handles filtering)
   const { data: books } = await supabase
     .from('books')
-    .select('id, slug, title, description, version, version_name, changelog')
+    .select('id, slug, title, description, version, version_name, changelog, last_synced_at')
     .eq('is_active', true)
     .order('title');
 
@@ -86,6 +86,14 @@ export default async function HomePage() {
                   new Date(a.last_read_at).getTime()
               )[0];
 
+              // Check if there's new content since user's last visit
+              const lastReadAt = lastRead
+                ? new Date(lastRead.last_read_at).getTime()
+                : 0;
+              const hasNewContent = book.last_synced_at && lastReadAt
+                ? new Date(book.last_synced_at).getTime() > lastReadAt
+                : false;
+
               return (
                 <Link
                   key={book.id}
@@ -101,9 +109,16 @@ export default async function HomePage() {
                         <p className="text-gray-600 mt-1">{book.description}</p>
                       )}
                     </div>
-                    <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {book.version_name || book.version}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {hasNewContent && (
+                        <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded">
+                          Updated
+                        </span>
+                      )}
+                      <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {book.version_name || book.version}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
