@@ -49,6 +49,8 @@ export function ChapterContent({
   const [selectedText, setSelectedText] = useState<string>('');
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [showResolved, setShowResolved] = useState(false);
   const [scrollPct, setScrollPct] = useState(initialProgress?.scroll_pct || 0);
 
   // Time tracking state
@@ -229,10 +231,13 @@ export function ChapterContent({
     }
   };
 
-  // Submit new comment
+  // Submit new comment or reply
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !selectedText) return;
+    if (!newComment.trim()) return;
+    if (!replyingTo && !selectedText) return;
+
+    const parentComment = replyingTo ? comments.find(c => c.id === replyingTo) : null;
 
     const { data, error } = await supabase
       .from('comments')
@@ -240,9 +245,10 @@ export function ChapterContent({
         book_id: bookId,
         chapter_slug: chapterSlug,
         user_id: userId,
-        anchor_text: selectedText,
-        anchor_paragraph: '', // TODO: Calculate paragraph ID
+        anchor_text: replyingTo ? (parentComment?.anchor_text || '') : selectedText,
+        anchor_paragraph: '',
         content: newComment.trim(),
+        parent_id: replyingTo || null,
       })
       .select(`
         id,
@@ -266,7 +272,38 @@ export function ChapterContent({
       setNewComment('');
       setSelectedText('');
       setShowCommentForm(false);
+      setReplyingTo(null);
     }
+  };
+
+  // Toggle comment resolved status
+  const handleToggleResolved = async (commentId: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('comments')
+      .update({ is_resolved: !currentStatus })
+      .eq('id', commentId);
+
+    if (error) {
+      console.error('Failed to update comment:', error);
+      return;
+    }
+
+    setComments(comments.map(c =>
+      c.id === commentId ? { ...c, is_resolved: !currentStatus } : c
+    ));
+  };
+
+  // Get threaded comments (parent comments with their replies)
+  const getThreadedComments = () => {
+    const parentComments = comments.filter(c => !c.parent_id);
+    const filteredParents = showResolved
+      ? parentComments
+      : parentComments.filter(c => !c.is_resolved);
+
+    return filteredParents.map(parent => ({
+      ...parent,
+      replies: comments.filter(c => c.parent_id === parent.id),
+    }));
   };
 
   if (isLoading) {
@@ -303,19 +340,23 @@ export function ChapterContent({
       />
 
       {/* Comment form popup */}
-      {showCommentForm && (
+      {(showCommentForm || replyingTo) && (
         <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-4 w-80 z-30">
           <div className="mb-2">
-            <span className="text-sm text-gray-500">Commenting on:</span>
-            <p className="text-sm italic text-gray-700 line-clamp-2">
-              &ldquo;{selectedText}&rdquo;
-            </p>
+            <span className="text-sm text-gray-500">
+              {replyingTo ? 'Replying to comment' : 'Commenting on:'}
+            </span>
+            {!replyingTo && selectedText && (
+              <p className="text-sm italic text-gray-700 line-clamp-2">
+                &ldquo;{selectedText}&rdquo;
+              </p>
+            )}
           </div>
           <form onSubmit={handleSubmitComment}>
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add your comment..."
+              placeholder={replyingTo ? 'Write your reply...' : 'Add your comment...'}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               rows={3}
               autoFocus
@@ -326,6 +367,7 @@ export function ChapterContent({
                 onClick={() => {
                   setShowCommentForm(false);
                   setSelectedText('');
+                  setReplyingTo(null);
                 }}
                 className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
               >
@@ -336,7 +378,7 @@ export function ChapterContent({
                 disabled={!newComment.trim()}
                 className="px-3 py-1 text-sm bg-accent text-white rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                Submit
+                {replyingTo ? 'Reply' : 'Submit'}
               </button>
             </div>
           </form>
@@ -345,26 +387,75 @@ export function ChapterContent({
 
       {/* Comments sidebar */}
       {comments.length > 0 && (
-        <aside className="fixed right-4 top-20 w-72 max-h-[calc(100vh-6rem)] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-sm p-4 z-10">
-          <h3 className="font-semibold text-sm text-gray-700 mb-3">
-            Comments ({comments.length})
-          </h3>
-          <div className="space-y-3">
-            {comments.map((comment) => (
-              <div
-                key={comment.id}
-                className={`p-2 rounded text-sm ${
-                  comment.is_resolved ? 'bg-gray-50 opacity-60' : 'bg-yellow-50'
-                }`}
-              >
-                <p className="text-xs text-gray-500 italic mb-1 line-clamp-1">
-                  &ldquo;{comment.anchor_text}&rdquo;
-                </p>
-                <p className="text-gray-800">{comment.content}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {comment.profiles?.email?.split('@')[0] || 'Anonymous'} ·{' '}
-                  {new Date(comment.created_at).toLocaleDateString()}
-                </p>
+        <aside className="fixed right-4 top-20 w-80 max-h-[calc(100vh-6rem)] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-sm p-4 z-10">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-sm text-gray-700">
+              Comments ({comments.filter(c => !c.parent_id).length})
+            </h3>
+            <label className="flex items-center gap-1 text-xs text-gray-500">
+              <input
+                type="checkbox"
+                checked={showResolved}
+                onChange={(e) => setShowResolved(e.target.checked)}
+                className="rounded"
+              />
+              Show resolved
+            </label>
+          </div>
+          <div className="space-y-4">
+            {getThreadedComments().map((thread) => (
+              <div key={thread.id} className="space-y-2">
+                {/* Parent comment */}
+                <div
+                  className={`p-3 rounded-lg text-sm ${
+                    thread.is_resolved ? 'bg-gray-50' : 'bg-yellow-50'
+                  }`}
+                >
+                  <p className="text-xs text-gray-500 italic mb-1 line-clamp-1">
+                    &ldquo;{thread.anchor_text}&rdquo;
+                  </p>
+                  <p className="text-gray-800">{thread.content}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-gray-400">
+                      {new Date(thread.created_at).toLocaleDateString()}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setReplyingTo(thread.id)}
+                        className="text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        Reply
+                      </button>
+                      <button
+                        onClick={() => handleToggleResolved(thread.id, thread.is_resolved)}
+                        className={`text-xs ${
+                          thread.is_resolved
+                            ? 'text-gray-500 hover:text-gray-700'
+                            : 'text-green-600 hover:text-green-800'
+                        }`}
+                      >
+                        {thread.is_resolved ? 'Reopen' : 'Resolve'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Replies */}
+                {thread.replies.length > 0 && (
+                  <div className="ml-4 space-y-2 border-l-2 border-gray-200 pl-3">
+                    {thread.replies.map((reply) => (
+                      <div
+                        key={reply.id}
+                        className="p-2 rounded bg-gray-50 text-sm"
+                      >
+                        <p className="text-gray-800">{reply.content}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(reply.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
