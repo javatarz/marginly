@@ -92,7 +92,7 @@ Pipeline order (defined in `scripts/ci-build.sh`):
 |----------|---------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `NEXT_PUBLIC_APP_URL` | Production URL (e.g., https://review.karun.me) |
+| `NEXT_PUBLIC_APP_URL` | Production URL (e.g., https://marginly.example.com) |
 | `SUPABASE_ACCESS_TOKEN` | For CLI migrations |
 | `SUPABASE_PROJECT_REF` | For CLI migrations |
 | `SUPABASE_SERVICE_ROLE_KEY` | For sync script (bypasses RLS)
