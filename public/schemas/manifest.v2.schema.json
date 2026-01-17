@@ -1,0 +1,174 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://review.karun.me/schemas/manifest.v2.schema.json",
+  "title": "Book Manifest v2",
+  "description": "Schema for book manifest files used by the book review platform",
+  "type": "object",
+  "required": ["version", "chapters"],
+  "properties": {
+    "version": {
+      "const": 2,
+      "description": "Manifest version, must be 2"
+    },
+    "book": {
+      "type": "object",
+      "description": "Book metadata",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Book title"
+        },
+        "author": {
+          "type": "string",
+          "description": "Book author"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the book"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version or release identifier"
+        },
+        "version_name": {
+          "type": "string",
+          "description": "Human-readable version name (e.g., 'Draft 1', 'Beta')"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last content update"
+        }
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "description": "List of chapters in reading order",
+      "items": {
+        "type": "object",
+        "required": ["slug", "title", "number"],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "URL-safe identifier, matches HTML filename without extension"
+          },
+          "title": {
+            "type": "string",
+            "description": "Chapter title"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Chapter number for display"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ready", "draft", "coming_soon"],
+            "default": "draft",
+            "description": "Publication status"
+          },
+          "wordCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Word count of chapter content"
+          },
+          "readingMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Estimated reading time in minutes"
+          },
+          "pageCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Page count (for print/PDF reference)"
+          }
+        }
+      }
+    },
+    "supplementary": {
+      "type": "array",
+      "description": "Additional resources (bibliography, appendices, etc.)",
+      "items": {
+        "type": "object",
+        "required": ["slug", "title", "type"],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "URL-safe identifier"
+          },
+          "title": {
+            "type": "string",
+            "description": "Resource title"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["bibliography", "appendix", "glossary", "index", "other"],
+            "description": "Type of supplementary content"
+          }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "description": "Aggregate statistics for the book",
+      "properties": {
+        "chapters": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of chapters"
+        },
+        "wordCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total word count across all chapters"
+        },
+        "readingMinutes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total estimated reading time"
+        },
+        "pageCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total page count"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": 2,
+      "book": {
+        "title": "intelligent Engineering",
+        "author": "Karun Japhet",
+        "description": "A book about AI-assisted software development",
+        "version": "v0.1",
+        "version_name": "Draft 1"
+      },
+      "chapters": [
+        {
+          "slug": "introduction",
+          "title": "Introduction",
+          "number": 1,
+          "status": "ready",
+          "wordCount": 2500,
+          "readingMinutes": 10
+        }
+      ],
+      "supplementary": [
+        {
+          "slug": "bibliography",
+          "title": "Bibliography",
+          "type": "bibliography"
+        }
+      ],
+      "totals": {
+        "chapters": 1,
+        "wordCount": 2500,
+        "readingMinutes": 10
+      }
+    }
+  ]
+}
