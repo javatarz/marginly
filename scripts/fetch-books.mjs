@@ -26,6 +26,19 @@ const CONFIG_PATH = join(ROOT_DIR, 'books.config.json');
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 async function loadConfig() {
+  // Check env var first
+  if (process.env.BOOKS_CONFIG) {
+    console.log('Loading config from BOOKS_CONFIG env var');
+    try {
+      return JSON.parse(process.env.BOOKS_CONFIG);
+    } catch (err) {
+      console.error('Failed to parse BOOKS_CONFIG env var:', err.message);
+      process.exit(1);
+    }
+  }
+
+  // Fall back to file
+  console.log('Loading config from books.config.json');
   try {
     const content = await readFile(CONFIG_PATH, 'utf-8');
     return JSON.parse(content);
@@ -38,7 +51,7 @@ async function loadConfig() {
 async function fetchGitHubRelease(repo, release) {
   const headers = {
     'Accept': 'application/vnd.github+json',
-    'User-Agent': 'book-review-platform',
+    'User-Agent': 'marginly',
   };
 
   if (GITHUB_TOKEN) {
@@ -146,7 +159,7 @@ async function fetchBook(bookConfig) {
     }
 
     const headers = {
-      'User-Agent': 'book-review-platform',
+      'User-Agent': 'marginly',
     };
     if (GITHUB_TOKEN) {
       headers['Authorization'] = `Bearer ${GITHUB_TOKEN}`;
