@@ -1,0 +1,12 @@
+{
+  "books": [
+    {
+      "slug": "my-book",
+      "source": {
+        "type": "github-release",
+        "repo": "your-username/your-book-repo",
+        "release": "latest"
+      }
+    }
+  ]
+}
