@@ -3,16 +3,13 @@
 -- ============================================
 -- Run this in your Supabase SQL Editor to set up the database
 
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
-
 -- ============================================
 -- TABLES
 -- ============================================
 
 -- Books table
 create table if not exists public.books (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   slug text unique not null,
   title text not null,
   description text,
@@ -26,7 +23,7 @@ create table if not exists public.books (
 
 -- Chapters metadata
 create table if not exists public.chapters (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   book_id uuid references public.books(id) on delete cascade not null,
   slug text not null,
   number int not null,
@@ -41,7 +38,7 @@ create table if not exists public.chapters (
 -- Book access (who can read what)
 -- Note: user_email is used for invite-only flow before user signs up
 create table if not exists public.book_access (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   book_id uuid references public.books(id) on delete cascade not null,
   user_id uuid references auth.users(id) on delete cascade,
   user_email text not null,
@@ -53,7 +50,7 @@ create table if not exists public.book_access (
 
 -- Comments (inline annotations)
 create table if not exists public.comments (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   book_id uuid references public.books(id) on delete cascade not null,
   chapter_slug text not null,
   user_id uuid references auth.users(id) on delete cascade not null,
@@ -70,7 +67,7 @@ create table if not exists public.comments (
 
 -- Reading progress
 create table if not exists public.reading_progress (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   book_id uuid references public.books(id) on delete cascade not null,
   chapter_slug text not null,
   user_id uuid references auth.users(id) on delete cascade not null,
@@ -84,7 +81,7 @@ create table if not exists public.reading_progress (
 
 -- Reading sessions (for detailed analytics)
 create table if not exists public.reading_sessions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
   book_id uuid references public.books(id) on delete cascade not null,
   chapter_slug text not null,

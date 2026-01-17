@@ -21,9 +21,25 @@ A self-hosted, invite-only book review platform for collecting feedback from bet
 ### 1. Create Supabase Project
 
 1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Go to SQL Editor and run the contents of `supabase/schema.sql`
-3. Go to Authentication → URL Configuration and add your site URL
-4. Copy your project URL and anon key from Settings → API
+2. Go to Authentication → URL Configuration and add your site URL
+3. Copy your project URL and anon key from Settings → API
+
+#### Run Initial Migration
+
+**Option A: Via Supabase CLI (recommended)**
+```bash
+# Install Supabase CLI
+brew install supabase/tap/supabase
+
+# Link to your project
+supabase link --project-ref YOUR_PROJECT_REF
+
+# Apply migrations
+supabase db push
+```
+
+**Option B: Manual**
+Copy the contents of `supabase/migrations/*_initial_schema.sql` into Supabase SQL Editor and run it.
 
 ### 2. Configure Environment
 
@@ -104,6 +120,32 @@ When the reader visits the site and enters their email, they'll receive a magic 
 Use a GitHub Action to build HTML from your manuscript and push to this repo's `public/books/` folder.
 
 See the main book repo for an example workflow.
+
+## Database Migrations
+
+Migrations are stored in `supabase/migrations/` and auto-deployed via GitHub Actions.
+
+### Creating New Migrations
+
+```bash
+# Make changes in Supabase Studio locally, then:
+supabase db diff -f my_change_name
+
+# Or create manually:
+supabase migration new my_change_name
+# Then edit supabase/migrations/<timestamp>_my_change_name.sql
+```
+
+### CI/CD Setup
+
+Add these secrets to your GitHub repository (Settings → Secrets):
+
+| Secret | Where to find it |
+|--------|------------------|
+| `SUPABASE_ACCESS_TOKEN` | [Supabase Dashboard](https://supabase.com/dashboard/account/tokens) → Access Tokens |
+| `SUPABASE_PROJECT_REF` | Your project URL: `https://<PROJECT_REF>.supabase.co` |
+
+Migrations run automatically when you push changes to `supabase/migrations/`.
 
 ## Development
 
