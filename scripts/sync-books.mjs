@@ -66,12 +66,34 @@ function titleFromSlug(slug) {
     .join(' ');
 }
 
-async function syncBook(bookData) {
-  const { slug, manifest } = bookData;
+function parseManifest(manifest) {
+  // v2 format: { version: 2, chapters: [...], supplementary: [...] }
+  // v1 format: [...] (array of chapters directly) or { chapters: [...] }
+  const isV2 = manifest.version === 2;
 
-  // Extract book metadata (support both formats)
-  const bookMeta = manifest.book || {};
-  const chapters = manifest.chapters || manifest;
+  if (isV2) {
+    return {
+      version: 2,
+      book: manifest.book || {},
+      chapters: manifest.chapters || [],
+      supplementary: manifest.supplementary || []
+    };
+  }
+
+  // v1 format
+  return {
+    version: 1,
+    book: manifest.book || {},
+    chapters: Array.isArray(manifest) ? manifest : (manifest.chapters || []),
+    supplementary: []
+  };
+}
+
+async function syncBook(bookData) {
+  const { slug, manifest: rawManifest } = bookData;
+
+  const manifest = parseManifest(rawManifest);
+  const { book: bookMeta, chapters } = manifest;
 
   // Upsert book
   const bookRecord = {
@@ -98,6 +120,7 @@ async function syncBook(bookData) {
   }
 
   console.log(`  Book ID: ${book.id}`);
+  console.log(`  Manifest version: ${manifest.version}`);
 
   // Upsert chapters
   if (Array.isArray(chapters) && chapters.length > 0) {
@@ -119,6 +142,11 @@ async function syncBook(bookData) {
     } else {
       console.log(`  Synced ${chapters.length} chapters`);
     }
+  }
+
+  // Log supplementary content (not stored in DB, read from manifest at runtime)
+  if (manifest.supplementary.length > 0) {
+    console.log(`  Found ${manifest.supplementary.length} supplementary resources (served from manifest)`);
   }
 
   return book;

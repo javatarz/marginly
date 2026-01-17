@@ -2,13 +2,15 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ChapterContent } from '@/components/reader/ChapterContent';
+import { getManifest, findSupplementary } from '@/lib/manifest';
+import { SupplementaryContent } from '@/components/reader/SupplementaryContent';
 
 interface PageProps {
   params: Promise<{ book: string; chapter: string }>;
 }
 
 export default async function ChapterPage({ params }: PageProps) {
-  const { book: bookSlug, chapter: chapterSlug } = await params;
+  const { book: bookSlug, chapter: contentSlug } = await params;
   const supabase = await createClient();
 
   const {
@@ -31,17 +33,38 @@ export default async function ChapterPage({ params }: PageProps) {
     notFound();
   }
 
-  // Get chapter details
+  // Try to get chapter details first
   const { data: chapter } = await supabase
     .from('chapters')
     .select('*')
     .eq('book_id', book.id)
-    .eq('slug', chapterSlug)
+    .eq('slug', contentSlug)
     .single();
 
-  if (!chapter || chapter.status === 'coming_soon') {
+  // If not a chapter, check if it's supplementary content
+  if (!chapter) {
+    const manifest = await getManifest(bookSlug);
+    const supplementary = manifest ? findSupplementary(manifest, contentSlug) : null;
+
+    if (!supplementary) {
+      notFound();
+    }
+
+    // Render supplementary content with simpler UI
+    return (
+      <SupplementaryContent
+        bookSlug={bookSlug}
+        bookTitle={book.title}
+        supplementary={supplementary}
+      />
+    );
+  }
+
+  if (chapter.status === 'coming_soon') {
     notFound();
   }
+
+  const chapterSlug = contentSlug;
 
   // Get all chapters for navigation
   const { data: allChapters } = await supabase

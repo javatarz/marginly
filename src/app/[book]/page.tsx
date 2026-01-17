@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
+import { getManifest } from '@/lib/manifest';
 
 interface PageProps {
   params: Promise<{ book: string }>;
@@ -59,6 +60,10 @@ export default async function BookPage({ params }: PageProps) {
     acc[c.chapter_slug] = (acc[c.chapter_slug] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  // Get supplementary content from manifest
+  const manifest = await getManifest(bookSlug);
+  const supplementary = manifest?.supplementary || [];
 
   return (
     <div className="min-h-screen bg-paper">
@@ -170,6 +175,28 @@ export default async function BookPage({ params }: PageProps) {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Supplementary Resources */}
+        {supplementary.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-xl font-bold mb-4">Additional Resources</h2>
+            <div className="space-y-2">
+              {supplementary.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={`/${bookSlug}/${item.slug}`}
+                  className="flex items-center gap-3 p-4 rounded-lg border bg-white border-gray-200 hover:border-accent hover:shadow-sm"
+                >
+                  <span className="text-gray-400">◇</span>
+                  <span className="text-ink">{item.title}</span>
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded capitalize">
+                    {item.type}
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </main>
