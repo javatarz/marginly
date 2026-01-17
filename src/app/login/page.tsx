@@ -16,13 +16,10 @@ export default function LoginPage() {
     const supabase = createClient();
 
     // First check if user has access to any books
-    const { data: access, error: accessError } = await supabase
-      .from('book_access')
-      .select('id')
-      .eq('user_email', email.toLowerCase())
-      .limit(1);
+    const { data: hasAccess, error: accessError } = await supabase
+      .rpc('check_email_has_access', { check_email: email });
 
-    if (accessError || !access || access.length === 0) {
+    if (accessError || !hasAccess) {
       setMessage({
         type: 'error',
         text: 'No account found with this email. Contact the author for an invite.',
