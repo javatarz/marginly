@@ -5,10 +5,14 @@ echo "=== CI Build Pipeline ==="
 
 echo ""
 echo "1. Fetching book content..."
-if [ -n "$GITHUB_TOKEN" ]; then
-  node scripts/fetch-books.mjs
+if [ -n "$BOOKS_CONFIG" ] || [ -f "books.config.json" ]; then
+  if [ -n "$GITHUB_TOKEN" ]; then
+    node scripts/fetch-books.mjs
+  else
+    echo "   Skipping: GITHUB_TOKEN not set (books must be pre-populated)"
+  fi
 else
-  echo "   Skipping: GITHUB_TOKEN not set (books must be pre-populated)"
+  echo "   Skipping: No book config found (set BOOKS_CONFIG or create books.config.json)"
 fi
 
 echo ""
