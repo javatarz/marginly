@@ -59,6 +59,7 @@ export function ChapterContent({
   const isActiveRef = useRef(true);
   const sessionIdRef = useRef<string | null>(null);
   const maxScrollRef = useRef(initialProgress?.scroll_pct || 0);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
 
@@ -225,7 +226,15 @@ export function ChapterContent({
   // Handle text selection for comments
   const handleTextSelection = () => {
     const selection = window.getSelection();
-    if (selection && selection.toString().trim().length > 0) {
+    if (!selection || selection.toString().trim().length === 0) {
+      return;
+    }
+
+    // Check if the selection is within the content element
+    const range = selection.getRangeAt(0);
+    const contentEl = contentRef.current;
+
+    if (contentEl && contentEl.contains(range.commonAncestorContainer)) {
       setSelectedText(selection.toString().trim());
       setShowCommentForm(true);
     }
@@ -334,6 +343,7 @@ export function ChapterContent({
 
       {/* Chapter content */}
       <div
+        ref={contentRef}
         className="book-content prose prose-lg max-w-none"
         dangerouslySetInnerHTML={{ __html: content }}
         onMouseUp={handleTextSelection}
