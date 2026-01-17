@@ -62,6 +62,8 @@ export function ChapterContent({
   const sessionIdRef = useRef<string | null>(null);
   const maxScrollRef = useRef(initialProgress?.scroll_pct || 0);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isSelectingRef = useRef(false);
+  const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const supabase = createClient();
 
@@ -226,21 +228,41 @@ export function ChapterContent({
   }, [bookId, chapterSlug, userId, supabase]);
 
   // Handle text selection for comments
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    if (!selection || selection.toString().trim().length === 0) {
-      return;
+  const handleMouseDown = useCallback(() => {
+    isSelectingRef.current = true;
+    if (selectionTimeoutRef.current) {
+      clearTimeout(selectionTimeoutRef.current);
+      selectionTimeoutRef.current = null;
+    }
+  }, []);
+
+  const handleTextSelection = useCallback(() => {
+    if (!isSelectingRef.current) return;
+
+    // Clear any existing timeout
+    if (selectionTimeoutRef.current) {
+      clearTimeout(selectionTimeoutRef.current);
     }
 
-    // Check if the selection is within the content element
-    const range = selection.getRangeAt(0);
-    const contentEl = contentRef.current;
+    // Wait for selection to stabilize (user finished dragging)
+    selectionTimeoutRef.current = setTimeout(() => {
+      isSelectingRef.current = false;
 
-    if (contentEl && contentEl.contains(range.commonAncestorContainer)) {
-      setSelectedText(selection.toString().trim());
-      setShowCommentForm(true);
-    }
-  };
+      const selection = window.getSelection();
+      if (!selection || selection.toString().trim().length === 0) {
+        return;
+      }
+
+      // Check if the selection is within the content element
+      const range = selection.getRangeAt(0);
+      const contentEl = contentRef.current;
+
+      if (contentEl && contentEl.contains(range.commonAncestorContainer)) {
+        setSelectedText(selection.toString().trim());
+        setShowCommentForm(true);
+      }
+    }, 200);
+  }, []);
 
   // Submit new comment or reply
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -348,6 +370,7 @@ export function ChapterContent({
         ref={contentRef}
         className="book-content prose prose-lg max-w-none"
         dangerouslySetInnerHTML={{ __html: content }}
+        onMouseDown={handleMouseDown}
         onMouseUp={handleTextSelection}
       />
 
