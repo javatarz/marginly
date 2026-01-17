@@ -1,5 +1,12 @@
 # Marginly
 
+[![License](https://img.shields.io/badge/License-Apache_2.0_+_Commons_Clause-blue.svg)](LICENSE)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/javatarz/marginly&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_APP_URL&envDescription=Supabase%20credentials%20required&envLink=https://github.com/javatarz/marginly%23setup)
+
+![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+
 A self-hosted, invite-only book review platform for collecting feedback from beta readers.
 
 ## Features
