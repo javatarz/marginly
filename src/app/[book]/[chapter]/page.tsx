@@ -132,18 +132,6 @@ export default async function ChapterPage({ params }: PageProps) {
 
       <main className="max-w-3xl mx-auto px-4 py-8">
         <article>
-          <header className="mb-8">
-            <p className="text-sm text-gray-500 mb-2">
-              Chapter {chapter.number}
-            </p>
-            <h1 className="text-3xl font-bold text-ink">{chapter.title}</h1>
-            {chapter.status === 'draft' && (
-              <span className="inline-block mt-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                Early Draft - Feedback Welcome
-              </span>
-            )}
-          </header>
-
           <ChapterContent
             bookSlug={bookSlug}
             chapterSlug={chapterSlug}
