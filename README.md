@@ -4,17 +4,22 @@ A self-hosted, invite-only book review platform for collecting feedback from bet
 
 ## Features
 
-- **Invite-only access** - You control who can read your book
+- **Invite-only access** - Control who can read your book via email allowlist
 - **Magic link authentication** - No passwords to manage
-- **Inline comments** - Readers can highlight text and leave feedback
-- **Reading progress tracking** - See who's read what
+- **Inline comments** - Readers highlight text and leave contextual feedback
+- **Threaded replies** - Respond to comments with nested threads
+- **Resolve comments** - Mark feedback as addressed
+- **Reading progress tracking** - Track scroll position, time spent, and completion
+- **Reading sessions** - Analytics on when and how readers engage
+- **Admin dashboard** - Manage readers, review comments, view analytics
 - **Multi-book support** - Host multiple books on one platform
+- **Auto-sync from manifests** - Books auto-discovered from `public/books/*/manifest.json`
 
 ## Tech Stack
 
 - **Frontend**: Next.js 14 (App Router), React, Tailwind CSS
 - **Backend**: Supabase (Auth, Database, RLS)
-- **Hosting**: Vercel (or any Node.js host)
+- **Hosting**: Vercel
 
 ## Setup
 
@@ -26,20 +31,13 @@ A self-hosted, invite-only book review platform for collecting feedback from bet
 
 #### Run Initial Migration
 
-**Option A: Via Supabase CLI (recommended)**
 ```bash
-# Install Supabase CLI
-brew install supabase/tap/supabase
-
-# Link to your project
-supabase link --project-ref YOUR_PROJECT_REF
+# Link to your project (via npx, no global install needed)
+npx supabase link --project-ref YOUR_PROJECT_REF
 
 # Apply migrations
-supabase db push
+npx supabase db push
 ```
-
-**Option B: Manual**
-Copy the contents of `supabase/migrations/*_initial_schema.sql` into Supabase SQL Editor and run it.
 
 ### 2. Configure Environment
 
@@ -64,52 +62,55 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### 4. Add Your First Book
+### 4. Add Yourself as Global Admin
 
-In Supabase SQL Editor:
+Global admins can access all books on the platform:
 
 ```sql
--- Add your book
-insert into books (slug, title, description, version, version_name)
-values (
-  'my-book',
-  'My Book Title',
-  'A description of my book',
-  'v0.1',
-  'Draft 1'
-);
-
--- Add yourself as admin
-insert into book_access (book_id, user_email, role)
-select id, 'your-email@example.com', 'admin'
-from books where slug = 'my-book';
+insert into global_admins (user_email)
+values ('your-email@example.com');
 ```
 
-### 5. Add Book Content
+### 5. Add Your First Book
 
-Place your HTML chapter files in:
+Create a book directory with a manifest:
 
 ```
-public/books/{book-slug}/
+public/books/my-book/
+├── manifest.json
 ├── 01-introduction.html
 ├── 02-chapter-two.html
 └── ...
 ```
 
-Then add chapter metadata in Supabase:
+Example `manifest.json`:
 
-```sql
-insert into chapters (book_id, slug, number, title, status)
-select id, '01-introduction', 1, 'Introduction', 'ready'
-from books where slug = 'my-book';
+```json
+{
+  "title": "My Book Title",
+  "description": "A description of my book",
+  "version": "v0.1",
+  "versionName": "Draft 1",
+  "chapters": [
+    { "slug": "01-introduction", "number": 1, "title": "Introduction", "status": "ready" },
+    { "slug": "02-chapter-two", "number": 2, "title": "Chapter Two", "status": "ready" }
+  ]
+}
 ```
+
+Books and chapters auto-sync to the database on deploy (via `scripts/sync-books.mjs`).
 
 ## Inviting Readers
 
+**Via Admin Dashboard** (recommended):
+1. Go to `/admin/readers`
+2. Enter the reader's email and select a book
+3. Click "Invite"
+
+**Via SQL**:
 ```sql
--- Add a reader (they'll get access when they sign up with this email)
-insert into book_access (book_id, user_email, role)
-select id, 'reader@example.com', 'reader'
+insert into book_access (book_id, user_email)
+select id, 'reader@example.com'
 from books where slug = 'my-book';
 ```
 
@@ -119,33 +120,41 @@ When the reader visits the site and enters their email, they'll receive a magic 
 
 Use a GitHub Action to build HTML from your manuscript and push to this repo's `public/books/` folder.
 
-See the main book repo for an example workflow.
+The sync script runs on each Vercel deploy and upserts book/chapter metadata.
 
 ## Database Migrations
 
-Migrations are stored in `supabase/migrations/` and auto-deployed via GitHub Actions.
+Migrations are stored in `supabase/migrations/` and auto-deployed via Vercel.
 
 ### Creating New Migrations
 
 ```bash
-# Make changes in Supabase Studio locally, then:
-supabase db diff -f my_change_name
+# Make changes in Supabase Studio, then generate migration:
+npx supabase db diff -f my_change_name
 
 # Or create manually:
-supabase migration new my_change_name
+npx supabase migration new my_change_name
 # Then edit supabase/migrations/<timestamp>_my_change_name.sql
 ```
 
-### CI/CD Setup
+### CI/CD Pipeline
 
-Add these secrets to your GitHub repository (Settings → Secrets):
+All CI/CD runs through Vercel (no GitHub Actions). The build script (`scripts/ci-build.sh`) runs:
+1. Lint
+2. Build (Next.js)
+3. Migrate (Supabase)
+4. Sync books/chapters from manifests
 
-| Secret | Where to find it |
-|--------|------------------|
-| `SUPABASE_ACCESS_TOKEN` | [Supabase Dashboard](https://supabase.com/dashboard/account/tokens) → Access Tokens |
-| `SUPABASE_PROJECT_REF` | Your project URL: `https://<PROJECT_REF>.supabase.co` |
+Add these environment variables in Vercel (Settings → Environment Variables):
 
-Migrations run automatically when you push changes to `supabase/migrations/`.
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `NEXT_PUBLIC_APP_URL` | Production URL |
+| `SUPABASE_ACCESS_TOKEN` | For CLI migrations |
+| `SUPABASE_PROJECT_REF` | For CLI migrations |
+| `SUPABASE_SERVICE_ROLE_KEY` | For sync script (bypasses RLS) |
 
 ## Development
 
@@ -161,15 +170,29 @@ npm run lint    # Run linter
 ```
 src/
 ├── app/
-│   ├── (auth)/login/       # Login page
+│   ├── login/              # Magic link login
+│   ├── auth/               # Auth callbacks (callback, signout, verify)
 │   ├── [book]/             # Book table of contents
 │   ├── [book]/[chapter]/   # Chapter reader
-│   └── admin/              # Admin dashboard (TODO)
+│   └── admin/              # Admin dashboard
+│       ├── readers/        # Manage readers, invite new ones
+│       ├── comments/       # Review all comments with filters
+│       └── analytics/      # Per-chapter engagement metrics
 ├── components/
-│   └── reader/             # Reader components
+│   └── reader/             # Reader components (ChapterContent, etc.)
 ├── lib/
-│   └── supabase/           # Supabase client utilities
-└── middleware.ts           # Auth middleware
+│   └── supabase/           # Supabase clients (server, client, middleware)
+└── middleware.ts           # Auth session refresh
+
+scripts/
+├── ci-build.sh             # Vercel build script (lint, build, migrate, sync)
+└── sync-books.mjs          # Sync manifests to database
+
+supabase/
+└── migrations/             # Database migrations (auto-deployed)
+
+public/
+└── books/                  # Book content (HTML chapters + manifest.json)
 ```
 
 ## License
