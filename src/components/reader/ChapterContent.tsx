@@ -62,8 +62,7 @@ export function ChapterContent({
   const sessionIdRef = useRef<string | null>(null);
   const maxScrollRef = useRef(initialProgress?.scroll_pct || 0);
   const contentRef = useRef<HTMLDivElement>(null);
-  const isSelectingRef = useRef(false);
-  const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const supabase = createClient();
 
@@ -228,45 +227,39 @@ export function ChapterContent({
   }, [bookId, chapterSlug, userId, supabase]);
 
   // Handle text selection for comments
-  const handleMouseDown = useCallback(() => {
-    isSelectingRef.current = true;
-    if (selectionTimeoutRef.current) {
-      clearTimeout(selectionTimeoutRef.current);
-      selectionTimeoutRef.current = null;
-    }
-  }, []);
-
   const handleTextSelection = useCallback(() => {
-    // Clear any existing timeout to debounce multiple mouseup events
-    if (selectionTimeoutRef.current) {
-      clearTimeout(selectionTimeoutRef.current);
-    }
+    // If comment form is already open, ignore new selections
+    if (showCommentForm || replyingTo) return;
 
-    // Wait longer for selection to fully stabilize after mouse release
-    selectionTimeoutRef.current = setTimeout(() => {
-      // Only process if we were actively selecting
-      if (!isSelectingRef.current) return;
-      isSelectingRef.current = false;
+    // If user is focused on the comment textarea, ignore
+    if (document.activeElement === commentTextareaRef.current) return;
 
-      const selection = window.getSelection();
-      if (!selection || selection.toString().trim().length === 0) {
-        return;
-      }
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
 
-      // Check if the selection is within the content element
-      try {
-        const range = selection.getRangeAt(0);
-        const contentEl = contentRef.current;
+    const selectedStr = selection.toString();
+    // Allow any selection including whitespace-only
+    if (selectedStr.length === 0) return;
 
-        if (contentEl && contentEl.contains(range.commonAncestorContainer)) {
-          setSelectedText(selection.toString().trim());
+    // Check if selection intersects with content area
+    try {
+      const range = selection.getRangeAt(0);
+      const contentEl = contentRef.current;
+
+      if (contentEl) {
+        // Check if any part of the selection is within the content element
+        const startInContent = contentEl.contains(range.startContainer);
+        const endInContent = contentEl.contains(range.endContainer);
+
+        if (startInContent || endInContent) {
+          setSelectedText(selectedStr);
           setShowCommentForm(true);
         }
-      } catch (e) {
-        // Selection may have been cleared, ignore
       }
-    }, 500);
-  }, []);
+    } catch {
+      // Selection may have been cleared, ignore
+    }
+  }, [showCommentForm, replyingTo]);
 
   // Submit new comment or reply
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -374,8 +367,8 @@ export function ChapterContent({
         ref={contentRef}
         className="book-content prose prose-lg max-w-none"
         dangerouslySetInnerHTML={{ __html: content }}
-        onMouseDown={handleMouseDown}
         onMouseUp={handleTextSelection}
+        onTouchEnd={handleTextSelection}
       />
 
       {/* Comment form popup */}
@@ -393,6 +386,7 @@ export function ChapterContent({
           </div>
           <form onSubmit={handleSubmitComment}>
             <textarea
+              ref={commentTextareaRef}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder={replyingTo ? 'Write your reply...' : 'Add your comment...'}
