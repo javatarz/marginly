@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:migrate": "npx supabase db push --include-all",
+    "db:sync": "node scripts/sync-books.mjs",
+    "ci": "npm run lint && npm run build && npm run db:migrate && npm run db:sync"
   },
   "dependencies": {
     "next": "^14.2.0",
