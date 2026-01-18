@@ -9,6 +9,8 @@
 
 A self-hosted, invite-only book review platform for collecting feedback from beta readers.
 
+![Demo](docs/demo.gif)
+
 ## Features
 
 - **Invite-only access** - Control who can read your book via email allowlist
