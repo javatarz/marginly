@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { MigrateChapterForm } from './MigrateChapterForm';
+import { BookSelector } from './BookSelector';
 
 interface Chapter {
   id: string;
@@ -141,24 +142,7 @@ export default async function ChaptersPage({
           <label htmlFor="book-select" className="block text-sm font-medium text-gray-700 mb-2">
             Select Book
           </label>
-          <form>
-            <select
-              id="book-select"
-              name="book"
-              defaultValue={selectedBookId}
-              onChange={(e) => {
-                const form = e.target.form;
-                if (form) form.submit();
-              }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              {books?.map((book: Book) => (
-                <option key={book.id} value={book.id}>
-                  {book.title}
-                </option>
-              ))}
-            </select>
-          </form>
+          <BookSelector books={books || []} selectedBookId={selectedBookId} />
         </div>
 
         {/* Duplicate Warning */}
