@@ -31,6 +31,7 @@ export default async function AdminDashboard() {
     { data: comments },
     { data: recentProgress },
     { data: recentSessions },
+    { data: duplicateChapters },
   ] = await Promise.all([
     supabase.from('books').select('id, title, slug').eq('is_active', true),
     supabase.from('book_access').select('id, user_email, user_id, invited_at'),
@@ -45,6 +46,8 @@ export default async function AdminDashboard() {
       .select('id, started_at, ended_at, max_scroll_pct')
       .order('started_at', { ascending: false })
       .limit(100),
+    // Find books with duplicate chapter numbers (indicates orphaned chapters from slug changes)
+    supabase.rpc('get_duplicate_chapters'),
   ]);
 
   const totalReaders = readers?.length || 0;
@@ -69,6 +72,9 @@ export default async function AdminDashboard() {
     return sum;
   }, 0) || 0;
 
+  // Count books with duplicate chapters
+  const booksWithDuplicates = duplicateChapters?.length || 0;
+
   return (
     <div className="min-h-screen bg-paper">
       <header className="border-b border-gray-200 bg-white">
@@ -84,6 +90,26 @@ export default async function AdminDashboard() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Duplicate Chapters Warning */}
+        {booksWithDuplicates > 0 && (
+          <Link
+            href="/admin/chapters"
+            className="block mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:bg-yellow-100 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-yellow-600 text-xl">&#9888;</span>
+              <div>
+                <p className="font-medium text-yellow-800">
+                  {booksWithDuplicates} book{booksWithDuplicates > 1 ? 's have' : ' has'} duplicate chapters
+                </p>
+                <p className="text-sm text-yellow-700">
+                  This can happen when chapter slugs change. Click to review and migrate data.
+                </p>
+              </div>
+            </div>
+          </Link>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -108,7 +134,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Link
             href="/admin/readers"
             className="block bg-white rounded-lg border border-gray-200 p-6 hover:border-accent hover:shadow-md transition-all"
@@ -116,6 +142,16 @@ export default async function AdminDashboard() {
             <h3 className="font-semibold text-lg text-ink mb-2">Manage Readers</h3>
             <p className="text-sm text-gray-500">
               View reader progress, invite new readers, manage access
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/chapters"
+            className="block bg-white rounded-lg border border-gray-200 p-6 hover:border-accent hover:shadow-md transition-all"
+          >
+            <h3 className="font-semibold text-lg text-ink mb-2">Manage Chapters</h3>
+            <p className="text-sm text-gray-500">
+              View chapters, migrate data after slug changes
             </p>
           </Link>
 
