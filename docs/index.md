@@ -19,33 +19,17 @@ Marginly helps authors gather feedback on their work before publication. It prov
 
 ## Getting Started
 
-<div class="grid cards" markdown>
+### [Deploy Your Own](getting-started/deploy.md)
 
--   :material-rocket-launch:{ .lg .middle } **Deploy Your Own**
+Set up your own Marginly instance on Vercel + Supabase in minutes.
 
-    ---
+### [Author Guide](author-guide/index.md)
 
-    Set up your own Marginly instance on Vercel + Supabase
+Set up your book repository, create a manifest, and integrate with Marginly.
 
-    [:octicons-arrow-right-24: Deploy guide](getting-started/deploy.md)
+### [Admin Guide](admin-guide/readers.md)
 
--   :material-book-edit:{ .lg .middle } **Author Guide**
-
-    ---
-
-    Set up your book repository and integrate with Marginly
-
-    [:octicons-arrow-right-24: Author guide](author-guide/index.md)
-
--   :material-account-group:{ .lg .middle } **Admin Guide**
-
-    ---
-
-    Manage readers, view analytics, handle chapter migrations
-
-    [:octicons-arrow-right-24: Admin guide](admin-guide/readers.md)
-
-</div>
+Manage readers, view analytics, and handle chapter migrations.
 
 ## Architecture Overview
 
