@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { InviteReaderForm } from './InviteReaderForm';
+import { EditDisplayName } from './EditDisplayName';
 
 export default async function ReadersPage() {
   const supabase = await createClient();
@@ -42,6 +43,17 @@ export default async function ReadersPage() {
     .select('id, title, slug')
     .eq('is_active', true);
 
+  // Fetch all profiles
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, display_name');
+
+  // Create a map of user_id to display_name
+  const profilesByUserId = profiles?.reduce((acc, p) => {
+    acc[p.id] = p.display_name;
+    return acc;
+  }, {} as Record<string, string | null>) || {};
+
   // Group progress by user
   const progressByUser = allProgress?.reduce((acc, p) => {
     if (!p.user_id) return acc;
@@ -70,6 +82,7 @@ export default async function ReadersPage() {
         user_id: r.user_id,
         invited_at: r.invited_at,
         books: [] as string[],
+        display_name: r.user_id ? profilesByUserId[r.user_id] || null : null,
       };
     }
     const book = books?.find(b => b.id === r.book_id);
@@ -77,7 +90,7 @@ export default async function ReadersPage() {
       acc[r.user_email].books.push(book.title);
     }
     return acc;
-  }, {} as Record<string, { email: string; user_id: string | null; invited_at: string; books: string[] }>);
+  }, {} as Record<string, { email: string; user_id: string | null; invited_at: string; books: string[]; display_name: string | null }>);
 
   const uniqueReaders = Object.values(readersByEmail || {});
 
@@ -122,8 +135,21 @@ export default async function ReadersPage() {
                     key={reader.email}
                     className="px-6 py-4 flex items-center justify-between"
                   >
-                    <div>
-                      <p className="font-medium text-ink">{reader.email}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-ink">
+                          {reader.display_name || reader.email}
+                        </p>
+                        {hasSignedUp && (
+                          <EditDisplayName
+                            userId={reader.user_id!}
+                            currentName={reader.display_name}
+                          />
+                        )}
+                      </div>
+                      {reader.display_name && (
+                        <p className="text-sm text-gray-500">{reader.email}</p>
+                      )}
                       <div className="flex items-center gap-3 mt-1">
                         <span
                           className={`text-xs px-2 py-0.5 rounded ${
