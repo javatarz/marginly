@@ -55,6 +55,7 @@ export function ChapterContent({
   const [showResolved, setShowResolved] = useState(false);
   const [scrollPct, setScrollPct] = useState(initialProgress?.scroll_pct || 0);
   const [userProfile, setUserProfile] = useState<{ display_name: string | null } | null>(null);
+  const [showComments, setShowComments] = useState(true);
 
   // Time tracking refs (using refs instead of state to avoid re-renders during selection)
   const timeSpentRef = useRef(initialProgress?.time_spent_seconds || 0);
@@ -434,22 +435,45 @@ export function ChapterContent({
         </div>
       )}
 
+      {/* Comments toggle button (shown when sidebar is hidden) */}
+      {comments.length > 0 && !showComments && (
+        <button
+          onClick={() => setShowComments(true)}
+          className="fixed right-4 top-20 bg-white border border-gray-200 rounded-lg shadow-sm px-3 py-2 z-10 flex items-center gap-2 hover:bg-gray-50"
+        >
+          <span className="text-sm font-medium text-gray-700">
+            Comments ({comments.filter(c => !c.parent_id).length})
+          </span>
+        </button>
+      )}
+
       {/* Comments sidebar */}
-      {comments.length > 0 && (
+      {comments.length > 0 && showComments && (
         <aside className="fixed right-4 top-20 w-80 max-h-[calc(100vh-6rem)] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-sm p-4 z-10">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-sm text-gray-700">
               Comments ({comments.filter(c => !c.parent_id).length})
             </h3>
-            <label className="flex items-center gap-1 text-xs text-gray-500">
-              <input
-                type="checkbox"
-                checked={showResolved}
-                onChange={(e) => setShowResolved(e.target.checked)}
-                className="rounded"
-              />
-              Show resolved
-            </label>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1 text-xs text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={showResolved}
+                  onChange={(e) => setShowResolved(e.target.checked)}
+                  className="rounded"
+                />
+                Show resolved
+              </label>
+              <button
+                onClick={() => setShowComments(false)}
+                className="text-gray-400 hover:text-gray-600"
+                title="Hide comments"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
           <div className="space-y-4">
             {getThreadedComments().map((thread) => (
