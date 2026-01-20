@@ -80,7 +80,7 @@ export default async function ChapterPage({ params }: PageProps) {
       ? allChapters?.[currentIndex + 1]
       : null;
 
-  // Get comments for this chapter
+  // Get comments for this chapter with author profiles
   const { data: rawComments } = await supabase
     .from('comments')
     .select(`
@@ -91,16 +91,17 @@ export default async function ChapterPage({ params }: PageProps) {
       parent_id,
       is_resolved,
       created_at,
-      user_id
+      user_id,
+      profiles:user_id (display_name)
     `)
     .eq('book_id', book.id)
     .eq('chapter_slug', chapterSlug)
     .order('created_at', { ascending: true });
 
-  // Transform comments to match expected type
+  // Transform profiles from array to object (Supabase returns array for joins)
   const comments = rawComments?.map((c) => ({
     ...c,
-    profiles: null as { email: string } | null,
+    profiles: Array.isArray(c.profiles) ? c.profiles[0] || null : c.profiles,
   })) || [];
 
   // Get or create reading progress
@@ -138,7 +139,7 @@ export default async function ChapterPage({ params }: PageProps) {
             bookId={book.id}
             userId={user.id}
             initialProgress={progress}
-            initialComments={comments}
+            initialComments={comments || []}
           />
         </article>
 

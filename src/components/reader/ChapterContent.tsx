@@ -14,7 +14,7 @@ interface Comment {
   is_resolved: boolean;
   created_at: string;
   user_id: string;
-  profiles: { email: string } | null;
+  profiles: { display_name: string | null } | null;
 }
 
 interface ReadingProgress {
@@ -54,6 +54,7 @@ export function ChapterContent({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [showResolved, setShowResolved] = useState(false);
   const [scrollPct, setScrollPct] = useState(initialProgress?.scroll_pct || 0);
+  const [userProfile, setUserProfile] = useState<{ display_name: string | null } | null>(null);
 
   // Time tracking refs (using refs instead of state to avoid re-renders during selection)
   const timeSpentRef = useRef(initialProgress?.time_spent_seconds || 0);
@@ -87,6 +88,21 @@ export function ChapterContent({
 
     loadContent();
   }, [bookSlug, chapterSlug]);
+
+  // Load user profile for comment attribution
+  useEffect(() => {
+    async function loadProfile() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', userId)
+        .single();
+      if (data) {
+        setUserProfile(data);
+      }
+    }
+    loadProfile();
+  }, [userId, supabase]);
 
   // Scroll restoration - restore position after content loads
   useEffect(() => {
@@ -298,7 +314,7 @@ export function ChapterContent({
     }
 
     if (data) {
-      setComments([...comments, { ...data, profiles: null }]);
+      setComments([...comments, { ...data, profiles: userProfile }]);
       setNewComment('');
       setSelectedText('');
       setShowCommentForm(false);
@@ -444,14 +460,19 @@ export function ChapterContent({
                     thread.is_resolved ? 'bg-gray-50' : 'bg-yellow-50'
                   }`}
                 >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-gray-700">
+                      {thread.profiles?.display_name || 'Anonymous'}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(thread.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
                   <p className="text-xs text-gray-500 italic mb-1 line-clamp-1">
                     &ldquo;{thread.anchor_text}&rdquo;
                   </p>
                   <p className="text-gray-800">{thread.content}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="text-xs text-gray-400">
-                      {new Date(thread.created_at).toLocaleDateString()}
-                    </p>
+                  <div className="flex items-center justify-end mt-2">
                     <div className="flex gap-2">
                       <button
                         onClick={() => setReplyingTo(thread.id)}
@@ -481,10 +502,15 @@ export function ChapterContent({
                         key={reply.id}
                         className="p-2 rounded bg-gray-50 text-sm"
                       >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-gray-600">
+                            {reply.profiles?.display_name || 'Anonymous'}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(reply.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
                         <p className="text-gray-800">{reply.content}</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {new Date(reply.created_at).toLocaleDateString()}
-                        </p>
                       </div>
                     ))}
                   </div>
