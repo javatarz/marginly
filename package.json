@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -15,6 +16,9 @@
     "fetch-books": "node scripts/fetch-books.mjs",
     "db:migrate": "npx supabase db push --include-all",
     "db:sync": "node scripts/sync-books.mjs",
+    "db:local:start": "npx supabase start",
+    "db:local:stop": "npx supabase stop",
+    "db:local:reset": "npx supabase db reset",
     "ci": "npm run lint && npm run build && npm run db:migrate && npm run db:sync"
   },
   "dependencies": {

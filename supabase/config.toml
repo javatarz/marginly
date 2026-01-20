@@ -20,7 +20,7 @@ api_url = "http://localhost"
 
 [auth]
 enabled = true
-site_url = "https://review.karun.me"
+site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://review.karun.me/auth/callback", "http://localhost:3000/auth/callback"]
 jwt_expiry = 3600
 enable_signup = false  # Invite-only
