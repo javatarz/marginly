@@ -80,7 +80,7 @@ export default async function ChapterPage({ params }: PageProps) {
       ? allChapters?.[currentIndex + 1]
       : null;
 
-  // Get comments for this chapter with author profiles
+  // Get comments for this chapter
   const { data: rawComments } = await supabase
     .from('comments')
     .select(`
@@ -91,17 +91,30 @@ export default async function ChapterPage({ params }: PageProps) {
       parent_id,
       is_resolved,
       created_at,
-      user_id,
-      profiles:user_id (display_name)
+      user_id
     `)
     .eq('book_id', book.id)
     .eq('chapter_slug', chapterSlug)
     .order('created_at', { ascending: true });
 
-  // Transform profiles from array to object (Supabase returns array for joins)
+  // Fetch profiles for comment authors separately (no direct FK between comments and profiles)
+  const userIds = Array.from(new Set(rawComments?.map(c => c.user_id).filter(Boolean) || []));
+  const { data: profiles } = userIds.length > 0
+    ? await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', userIds)
+    : { data: [] };
+
+  const profilesById = (profiles || []).reduce((acc, p) => {
+    acc[p.id] = { display_name: p.display_name };
+    return acc;
+  }, {} as Record<string, { display_name: string | null }>);
+
+  // Attach profiles to comments
   const comments = rawComments?.map((c) => ({
     ...c,
-    profiles: Array.isArray(c.profiles) ? c.profiles[0] || null : c.profiles,
+    profiles: profilesById[c.user_id] || null,
   })) || [];
 
   // Get or create reading progress
