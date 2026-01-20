@@ -64,6 +64,10 @@ body {
   @apply mb-1;
 }
 
+.book-content a {
+  @apply text-blue-700 underline underline-offset-2 hover:text-blue-900;
+}
+
 /* Comment highlighting */
 .has-comment {
   @apply bg-yellow-100 cursor-pointer;
