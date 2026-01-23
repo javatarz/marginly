@@ -23,7 +23,10 @@ INSERT INTO auth.users (
   is_super_admin,
   role,
   aud,
-  confirmation_token
+  confirmation_token,
+  email_change,
+  email_change_token_new,
+  recovery_token
 ) VALUES
   -- Admin user
   (
@@ -39,6 +42,9 @@ INSERT INTO auth.users (
     false,
     'authenticated',
     'authenticated',
+    '',
+    '',
+    '',
     ''
   ),
   -- Reader user
@@ -55,6 +61,9 @@ INSERT INTO auth.users (
     false,
     'authenticated',
     'authenticated',
+    '',
+    '',
+    '',
     ''
   )
 ON CONFLICT (id) DO NOTHING;
