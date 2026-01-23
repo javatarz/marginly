@@ -442,7 +442,7 @@ export function ChapterContent({
           className="fixed right-4 top-20 bg-white border border-gray-200 rounded-lg shadow-sm px-3 py-2 z-10 flex items-center gap-2 hover:bg-gray-50"
         >
           <span className="text-sm font-medium text-gray-700">
-            Comments ({comments.filter(c => !c.parent_id).length})
+            Comments ({comments.filter(c => !c.parent_id && !c.is_resolved).length})
           </span>
         </button>
       )}
@@ -452,7 +452,7 @@ export function ChapterContent({
         <aside className="fixed right-4 top-20 w-80 max-h-[calc(100vh-6rem)] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-sm p-4 z-10">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-sm text-gray-700">
-              Comments ({comments.filter(c => !c.parent_id).length})
+              Comments ({comments.filter(c => !c.parent_id && (showResolved || !c.is_resolved)).length})
             </h3>
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-1 text-xs text-gray-500">
