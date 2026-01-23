@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { CommentsFilters } from './CommentsFilters';
 
 interface PageProps {
   searchParams: Promise<{ chapter?: string; resolved?: string }>;
@@ -78,65 +79,7 @@ export default async function CommentsPage({ searchParams }: PageProps) {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-          <form className="flex flex-wrap gap-4 items-center">
-            <div>
-              <label className="text-sm text-gray-600 mr-2">Chapter:</label>
-              <select
-                name="chapter"
-                defaultValue={params.chapter || ''}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm"
-                onChange={(e) => {
-                  const url = new URL(window.location.href);
-                  if (e.target.value) {
-                    url.searchParams.set('chapter', e.target.value);
-                  } else {
-                    url.searchParams.delete('chapter');
-                  }
-                  window.location.href = url.toString();
-                }}
-              >
-                <option value="">All chapters</option>
-                {chapters?.map((ch) => (
-                  <option key={ch.slug} value={ch.slug}>
-                    Ch {ch.number}: {ch.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600 mr-2">Status:</label>
-              <select
-                name="resolved"
-                defaultValue={params.resolved || ''}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm"
-                onChange={(e) => {
-                  const url = new URL(window.location.href);
-                  if (e.target.value) {
-                    url.searchParams.set('resolved', e.target.value);
-                  } else {
-                    url.searchParams.delete('resolved');
-                  }
-                  window.location.href = url.toString();
-                }}
-              >
-                <option value="">All comments</option>
-                <option value="false">Unresolved</option>
-                <option value="true">Resolved</option>
-              </select>
-            </div>
-
-            {(params.chapter || params.resolved) && (
-              <Link
-                href="/admin/comments"
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                Clear filters
-              </Link>
-            )}
-          </form>
-        </div>
+        <CommentsFilters chapters={chapters || []} />
 
         {/* Comments List */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
