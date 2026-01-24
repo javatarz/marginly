@@ -29,6 +29,8 @@ yarn-error.log*
 # Local env files
 .env*.local
 .env
+.env.prod
+.env.vercel
 
 # Vercel
 .vercel
@@ -46,6 +48,7 @@ next-env.d.ts
 # Supabase
 .supabase/
 supabase/.temp/
+supabase/.branches/
 
 # Book content (fetched at build time)
 public/books/
